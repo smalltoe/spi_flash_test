@@ -1,12 +1,12 @@
-
 #ifndef _STORAGE_DRIVER_H_
 #define _STORAGE_DRIVER_H_
 /* used by my project */
-#define CFG_EXAMPLE_MSC_READONLY false
+
 #define SPI_BAUDRATE_LOW (1000*1000)
 #define SPI_BAUDRATE_HIGH (40*1000*1000)
 
 enum {
+    SDMMC_LUN=1,
     W25Q_LUN=0,
 };
 

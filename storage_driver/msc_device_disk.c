@@ -28,17 +28,26 @@
 #include "tusb.h"
 
 #include "W25Q.h"
+#include "spi_sdmmc.h"
 #include "hardware/gpio.h"
 #include "storage_driver.h"
 
 w25q_data_t *pW25Q=NULL;
-
+sdmmc_data_t *pSDMMC=NULL;
 
 void storage_driver_init() {
   // W25Q driver initialize
   pW25Q = (w25q_data_t*)malloc(sizeof(w25q_data_t));
   pW25Q->spiInit=false;
   w25q_disk_initialize(W25Q_SPI_PORT, W25Q_PIN_CS, pW25Q);
+
+  // SDMMC driver initialize
+  pSDMMC = (sdmmc_data_t*)malloc(sizeof(sdmmc_data_t));
+  pSDMMC->spiInit=false;
+#ifdef __SPI_SDMMC_DMA
+  pSDMMC->dmaInit=false;
+#endif
+  sdmmc_disk_initialize(SDMMC_SPI_PORT, SDMMC_PIN_CS, pSDMMC);
 
   // LED blinking when reading/writing
   gpio_init(LED_BLINKING_PIN);
@@ -57,9 +66,19 @@ uint8_t tud_msc_get_maxlun_cb(void)
 // Application fill vendor id, product id and revision with string up to 8, 16, 4 characters respectively
 void tud_msc_inquiry_cb(uint8_t lun, uint8_t vendor_id[8], uint8_t product_id[16], uint8_t product_rev[4])
 {
+  switch (lun) {
+    case SDMMC_LUN:
+      sprintf(vendor_id  , "SDMMC");
+      sprintf(product_id , "Mass Storage");
+      sprintf(product_rev, "1.0");
+    break;
+    case W25Q_LUN:
       sprintf(vendor_id  , "Winbond");
       sprintf(product_id , "Mass Storage");
       sprintf(product_rev, "1.0");
+    break;
+  }
+ 
 }
 
 // Invoked when received Test Unit Ready command.
@@ -75,10 +94,16 @@ bool tud_msc_test_unit_ready_cb(uint8_t lun)
 // Application update block count and block size
 void tud_msc_capacity_cb(uint8_t lun, uint32_t* block_count, uint16_t* block_size)
 {
+  switch(lun) {
+    case SDMMC_LUN:
+        *block_count = pSDMMC->sectCount;
+        *block_size  = pSDMMC->sectSize;
+    break;
+    case W25Q_LUN:
         *block_count = pW25Q->sectorCount;
         *block_size  = pW25Q->sectorSize;
-
-
+    break;
+  }
 }
 
 // Invoked when received Start Stop Unit command
@@ -107,9 +132,14 @@ bool tud_msc_start_stop_cb(uint8_t lun, uint8_t power_condition, bool start, boo
 // Copy disk's data to buffer (up to bufsize) and return number of copied bytes.
 int32_t tud_msc_read10_cb(uint8_t lun, uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize)
 {
-
+  switch(lun) {
+    case SDMMC_LUN:
+      if (!sdmmc_read_sector(lba, buffer, bufsize, pSDMMC)) return -1;
+    break;
+    case W25Q_LUN:
       if (!w25q_read_sector((uint32_t)lba, offset, buffer, bufsize, pW25Q)) return -1;
-
+    break;
+  }
   return (int32_t) bufsize;
 }
 
@@ -117,11 +147,11 @@ bool tud_msc_is_writable_cb (uint8_t lun)
 {
   (void) lun;
 
-// #ifdef CFG_EXAMPLE_MSC_READONLY
-//   return false;
-// #else
+#ifdef CFG_EXAMPLE_MSC_READONLY
+  return false;
+#else
   return true;
-// #endif
+#endif
 }
 
 // Callback invoked when received WRITE10 command.
@@ -129,13 +159,21 @@ bool tud_msc_is_writable_cb (uint8_t lun)
 int32_t tud_msc_write10_cb(uint8_t lun, uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize)
 {
 
+  switch (lun) {
+    case SDMMC_LUN:
+        if (!sdmmc_write_sector(lba, buffer, bufsize, pSDMMC)) return -1;
+    break;
+    case W25Q_LUN:
       if (offset >= pW25Q->sectorSize) return -1;
-// #ifndef CFG_EXAMPLE_MSC_READONLY
+#ifndef CFG_EXAMPLE_MSC_READONLY
         w25q_sector_erase(lba, pW25Q);
         w25q_write_sector(lba, offset, buffer, bufsize, pW25Q);
-// #else
-//         (void) lun; (void) lba; (void) offset; (void) buffer;
-// #endif
+#else
+        (void) lun; (void) lba; (void) offset; (void) buffer;
+#endif
+    break;
+  }
+  
 
   return (int32_t) bufsize;
 }

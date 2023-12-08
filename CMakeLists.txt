@@ -51,7 +51,6 @@ target_link_libraries(pico_usb_msc_device
         tinyusb_device 
         tinyusb_board
         storage_driver
-        pico_stdlib
         )
 
 pico_add_extra_outputs(pico_usb_msc_device)
