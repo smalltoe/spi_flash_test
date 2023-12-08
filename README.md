@@ -5,7 +5,7 @@ This is a repo to figure out issues with SPI flash
 This is the result of journalctl -kS -1min
 
 
-
+```
 Dec 08 11:00:40 lora kernel: usb 1-1.3: new full-speed USB device number 14 using xhci_hcd
 Dec 08 11:00:40 lora kernel: usb 1-1.3: New USB device found, idVendor=cafe, idProduct=4002, bcdDevice= 1.00
 Dec 08 11:00:40 lora kernel: usb 1-1.3: New USB device strings: Mfr=1, Product=2, SerialNumber=3
@@ -91,3 +91,4 @@ Dec 08 11:00:44 lora kernel: sd 0:0:0:0: [sda] Unaligned partial completion (res
 Dec 08 11:00:44 lora kernel: sd 0:0:0:0: [sda] tag#0 CDB: opcode=0x28 28 00 00 00 00 7e 00 00 01 00
 Dec 08 11:00:45 lora kernel: usb 1-1.3: reset full-speed USB device number 14 using xhci_hcd
 Dec 08 11:00:45 lora kernel: sd 0:0:0:0: [sda] Unaligned partial completion (resid=1984, sector_sz=4096)
+```
