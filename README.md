@@ -1,10 +1,16 @@
 # spi_flash_test
 This is a repo to figure out issues with SPI flash
 
+```
+lora@lora:~/pico/msc/build $ sudo parted -l
+Error: /dev/sda: unrecognised disk label
+Model: Winbond Mass Storage (scsi)
+Disk /dev/sda: 2097kB
+Sector size (logical/physical): 4096B/4096B
+```
+
 
 This is the result of journalctl -kS -1min
-
-
 ```
 Dec 08 11:00:40 lora kernel: usb 1-1.3: new full-speed USB device number 14 using xhci_hcd
 Dec 08 11:00:40 lora kernel: usb 1-1.3: New USB device found, idVendor=cafe, idProduct=4002, bcdDevice= 1.00
